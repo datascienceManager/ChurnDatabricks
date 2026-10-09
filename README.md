@@ -1,21 +1,18 @@
-I'll build a Databricks notebook that runs the churn analysis and generates a deck like this one. I'm starting from the logic in your original notebook.
+I've rebuilt the notebook around one function, `generate_churn_report(period_start, period_end, grace_days=90)`. You can call it for any date range.
 
-I'm building a Databricks notebook that runs the churn analysis and generates the same deck. I've read your original notebook and the deck code, and I'm now writing the notebook. I'll test it locally on synthetic data before sending it.
+```python
+generate_churn_report("2026-10-01", "2026-10-31")                 # a month
+generate_churn_report("2026-07-01", "2026-09-30")                 # a quarter, or any range
+generate_churn_report("2026-10-01", "2026-10-31", grace_days=60)  # another grace period
+```
 
-The data-loading and analysis cells of the notebook are written. I'm now writing the chart and deck cells, then I'll test the deck output against the existing deck.
+- **Tomorrow's run:** Change `period_start` and `period_end` in the widgets and run the last cell, or call the function from any cell. The deck, charts and a file of every number used go to the output folder.
+- **Several months in a row:** Load the subscriber and session data once with `load_dim()` and `load_sessions(end_date)`. Then pass them to the function with `dim=` and `sess=` in a loop. A usage cell in the notebook shows this.
+- **Titles and wording:** They follow the dates and the data, so nothing needs editing between periods. A full calendar month gets a month name like "October 2026". Any other range reads as "1 Jul 2026 to 30 Sep 2026". The slides no longer assume that most churners went silent or that one country dominates. They say so only when the numbers show it.
+- **Error handling:** It stops with a clear message if the grace-period columns don't exist, if the range has no churned customers, or if nobody tried and failed.
+- **One-time setup:** You set the data paths, Synapse host and secret scope once in the configuration cell, not on every run. The scope name is still a placeholder (`CHANGE_ME_SCOPE`), so replace it before the first real run.
 
-The notebook's charts now render from the embedded September figures. I'm checking them visually against the existing deck, then I'll write the slide-building cell.
-
-The notebook now produces all 16 slides in the sample run, and the layout looks close to your current deck. I'm fixing some small differences (table spacing, a note-box position, a few wording points), then I'll package the notebook.
-
-I've built a Databricks notebook that runs the churn analysis and produces the same 16-slide deck. I haven't run the Spark queries, so the first real run is the real test.
-
-- **What I tested:** In sample mode the notebook built all 16 slides from the September 2026 figures, with no database access. The deck passed validation and the layout matches your current one. The Spark cells (cohort, viewing, deep dive) couldn't be tested here because Spark can't be installed in this workspace.
-- **What it does:** It reads the churn cohort and the viewer sessions, then writes the deck, the charts and a file with every number used. The queries follow your original notebook's logic, rewritten in PySpark. Titles and key points are written from the computed numbers, so a new month needs no manual editing. It prints reconciliation checks, such as buckets adding to 113,610.
-- **Setting it up:** Import it with Workspace > Import. Before running, change `secret_scope` and the two secret key names to the ones that hold your Synapse login. The other widgets (period, grace days, paths, output folder) default to September 2026 and your original paths. Run it with `use_sample_metrics = true` first to check the template and the output folder.
-- **Subscription count:** I set the 116,294 total to count churned subscription rows. Your original notebook output showed 115,146, which was the distinct count. I'm inferring 116,294 is the row count. The run prints both, so please compare it against 116,294.
-- **Root causes now cover every customer:** The notebook assigns each of the 815 the error they hit most often, so the 465 "not broken out" will shrink. The cause counts may differ from the deck, which used only the top error per country.
-- **Viewing scope:** The session query reads the whole `ViewerSessions` view, which does not exclude sports or live content. That probably removes the "sports not covered" doubt I flagged earlier. The query still limits it to the listed MENA countries and to valid asset IDs.
+I re-ran the sample mode, and the function ran twice in one session. I also checked a quarter range with 60-day grace on the sample figures, which gave a validated deck with correct labels. As before, the Spark queries haven't run against your data, so the first real run is the real test.
 
 Files are in /tmp/build:
 - TOD_Churn_Report_Builder.py
